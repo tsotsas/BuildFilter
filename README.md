@@ -72,7 +72,7 @@ BuildFilter (the C++ version). Its menu:
 
 - It only changes the game folder, never your saves. The original game exe is kept in
   `mods/slormancer-mods-backup/`, and `mods/slormancer-mods.json` records what it added.
-- A game that already loads Aurie mods through **Slorm Loader** (Vortex) or another `version.dll` loader keeps it:
+- A game that already loads Aurie mods through another mod loader (a `version.dll` loader) keeps it:
   the installer then leaves the game exe alone and adds only the mods.
 - Moving the game to another folder or drive is fine: the loader is found relative to the game's folder at every
   launch.
@@ -82,9 +82,8 @@ BuildFilter (the C++ version). Its menu:
 
 It is SlormAPI's installer with BuildFilter added (`installer/` in the SlormAPI repository).
 
-### Manual or Vortex
-The zips hold only the game-folder layout, so they unzip straight into `<The Slormancer folder>` or install with
-Vortex (SlormAPI first):
+### Manual
+With SlormAPI installed, unzip one of these into `<The Slormancer folder>` (they hold only the game-folder layout):
 - C++ version (`BuildFilter-1.0.0.zip`): `mods/Aurie/BuildFilter.dll`.
 - Lua version (`BuildFilter-Lua-1.0.0.zip`): `mods/lua/BuildFilter.lua`. It starts while the game runs.
 
