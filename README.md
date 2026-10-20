@@ -1,4 +1,4 @@
-# BuildFilter 1.0.1 — a loot filter for your build (The Slormancer)
+# BuildFilter 1.0.2 — a loot filter for your build (The Slormancer)
 
 ![BuildFilter](docs/banner.png)
 
@@ -38,7 +38,7 @@ twice, with the same pages, rules and behaviour.
 
 | | C++ (`source/`) | Lua (`lua/BuildFilter.lua`) |
 |---|---|---|
-| install | `mods/aurie/BuildFilter.dll` | `mods/lua/BuildFilter.lua` |
+| install | `mods/aurie/BuildFilter.dll` | `mods/lua/buildfilter/` (`lua-pack.json` + `BuildFilter.lua`) |
 | reaches SlormAPI through | `SlormAPI_Interface.hpp` (`Request`, `Subscribe`) | the `slorm` table (`slorm.request`, `slorm.on`) |
 | game data | read from the game's files (`GameData.hpp`) | SlormAPI's `slot_info`, `stat_info`, `legendary_info` |
 | settings saved in | `mods/aurie/BuildFilter/rules.json` | `mods/aurie/SlormAPI/data/lua_BuildFilter.json` |
@@ -54,7 +54,7 @@ Install one of the two. If both are there, the Lua version stays off and the Mod
 ## Install
 
 ### Easy: the installer (recommended)
-1. Download **`BuildFilter-Installer-1.0.1.zip`** from this repository's **Releases** page and unzip it.
+1. Download **`BuildFilter-Installer-1.0.2.zip`** from this repository's **Releases** page and unzip it.
 2. Close the game, double-click **`Install.bat`** and choose **1**.
 3. Start the game from Steam as usual.
 
@@ -84,19 +84,20 @@ It is SlormAPI's installer with BuildFilter added (`installer/` in the SlormAPI 
 
 ### Manual
 With SlormAPI installed, unzip one of these into `<The Slormancer folder>` (they hold only the game-folder layout):
-- C++ version (`BuildFilter-1.0.1.zip`): `mods/Aurie/BuildFilter.dll`.
-- Lua version (`BuildFilter-Lua-1.0.1.zip`): `mods/lua/BuildFilter.lua`. It starts while the game runs.
+- C++ version (`BuildFilter-1.0.2.zip`): `mods/Aurie/BuildFilter.dll`.
+- Lua version (`BuildFilter-Lua-1.0.2.zip`): a Lua pack, `mods/lua/buildfilter/` (`lua-pack.json` +
+  `BuildFilter.lua`). It starts while the game runs.
 
 ### Vortex
-With The Slormancer's Vortex extension and its loader installed, add `SlormAPI-1.0.1.zip` and `BuildFilter-1.0.1.zip`
+With The Slormancer's Vortex extension and its loader installed, add `SlormAPI-1.0.2.zip` and `BuildFilter-1.0.2.zip`
 in Vortex like any other mod (both go to `mods/Aurie`). Don't use the installer then; if you used it before, run it
-once more and choose **4** first (the Vortex loader setup needs the original game exe back). The Lua version is a
-manual install: copy `BuildFilter.lua` into `mods\lua`.
+once more and choose **4** first (the Vortex loader setup needs the original game exe back). The Lua version
+(`BuildFilter-Lua-1.0.2.zip`) installs through Vortex too; install only one of the two versions.
 
 Names (stats, legendaries, skills) come from the game's own data files, so the lists follow game updates.
 BuildFilter never edits your save files directly.
 
-Uninstall: delete `BuildFilter.dll` (and the `mods/aurie/BuildFilter` folder) or `BuildFilter.lua`. The game's own
+Uninstall: delete `BuildFilter.dll` (and the `mods/aurie/BuildFilter` folder) or the `mods/lua/buildfilter` folder. The game's own
 button and panel come back.
 
 ## Build

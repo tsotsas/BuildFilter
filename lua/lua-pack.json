@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "type": "slorm-lua",
+  "id": "buildfilter",
+  "name": "BuildFilter (Lua)",
+  "version": "1.0.2",
+  "author": "thothas",
+  "description": "A loot filter for your build, the Lua version. Runs on SlormAPI.",
+  "entry": "BuildFilter.lua",
+  "requires": { "slorm.slormapi": "1.0.2" }
+}
