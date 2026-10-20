@@ -486,9 +486,14 @@ static Json Text(Json X, Json Y, Json S, const char* Font = "ft_standard_12", in
 	if (Mark) args.Push(Json(Mark));
 	return O({ { "fn", "scr_draw_text" }, { "args", args } });
 }
+// The game lays its menus out for 1920x1080 and multiplies positions and sizes by self.ui_scale (from the resolution)
+// as it draws; its mba entries and the panel's position arrive already scaled. "sc" is that scale (a program var).
+static Json Sc() { return V("sc"); }
+static Json S(Json N) { return Op("*", { std::move(N), Sc() }); }
+static Json ScaleVar() { return A({ "sc", Op("??", { SelfVar("ui_scale"), 1 }) }); }
 static Json Spr(const char* Name, Json Frame, Json X, Json Y)
 {
-	return O({ { "fn", "draw_sprite" }, { "args", A({ Asset(Name), Frame, X, Y }) } });
+	return O({ { "fn", "draw_sprite_ext" }, { "args", A({ Asset(Name), Frame, X, Y, Sc(), Sc(), 0, 0xFFFFFF, 1 }) } });
 }
 static Json Push(Json Entry, Json When = Json())
 {
@@ -512,19 +517,19 @@ static Json InventoryProgram(bool On, bool Ours)
 	Json x = V("bx"), y = V("by");
 	const char* right = On ? "spr_menu_red_button" : "spr_menu_grey_button";
 	Calls c;
-	c += O({ { "fn", "$mba_set" }, { "args", A({ "Filter Active", 4, 168 }) } });
+	c += O({ { "fn", "$mba_set" }, { "args", A({ "Filter Active", 4, S(168) }) } });
 	c += O({ { "fn", "$mba_set" }, { "args", A({ "Filter Active", 1, Asset("spr_menu_grey_button") }) } });
 	c += O({ { "fn", "$mba_set" }, { "args", A({ "Filter Active", 6, "Filter-o-tron" }) } });
-	c += O({ { "fn", "draw_sprite" }, { "args", A({ Asset("spr_menu_grey_button"), Op("?", { Op("and", { shown, Json(!Ours) }), 3, 0 }), x, y }) } });
-	c += Text(Op("+", { x, 84 }), Op("+", { y, 30 }), "Filter-o-tron");
-	c += O({ { "fn", "draw_sprite" }, { "args", A({ Asset(right), Op("?", { oursShown, 3, 0 }), Op("+", { x, 168 }), y }) } });
-	c += Text(Op("+", { x, 252 }), Op("+", { y, 30 }), "Build Filter");
-	c += Push(A({ "Build Filter", Asset(right), Op("+", { x, 168 }), y, 168, 52, "Build Filter", g_Sink, "bf:open" }),
+	c += Spr("spr_menu_grey_button", Op("?", { Op("and", { shown, Json(!Ours) }), 3, 0 }), x, y);
+	c += Text(Op("+", { x, S(84) }), Op("+", { y, S(30) }), "Filter-o-tron");
+	c += Spr(right, Op("?", { oursShown, 3, 0 }), Op("+", { x, S(168) }), y);
+	c += Text(Op("+", { x, S(252) }), Op("+", { y, S(30) }), "Build Filter");
+	c += Push(A({ "Build Filter", Asset(right), Op("+", { x, S(168) }), y, S(168), S(52), "Build Filter", g_Sink, "bf:open" }),
 		Op("not", { oursShown }));
-	c += Push(A({ "Filter-o-tron", Asset("spr_menu_grey_button"), x, y, 168, 52, "Filter-o-tron", g_Sink, "bf:game" }), oursShown);
+	c += Push(A({ "Filter-o-tron", Asset("spr_menu_grey_button"), x, y, S(168), S(52), "Filter-o-tron", g_Sink, "bf:game" }), oursShown);
 	return O({
-		{ "vars", A({ A({ "bx", Op("??", { Op("mba", { "Filter Active", 2 }), BTN_X }) }),
-			A({ "by", Op("??", { Op("mba", { "Filter Active", 3 }), BTN_Y }) }) }) },
+		{ "vars", A({ ScaleVar(), A({ "bx", Op("??", { Op("mba", { "Filter Active", 2 }), S(BTN_X) }) }),
+			A({ "by", Op("??", { Op("mba", { "Filter Active", 3 }), S(BTN_Y) }) }) }) },
 		{ "when", Op("or", { Op("def", { Op("mba", { "Filter Active", 0 }) }),
 			Op("and", { shown, Op("==", { SelfVar("menu_show"), "inventory" }) }) }) },
 		{ "calls", c.List } });
@@ -533,8 +538,8 @@ static Json InventoryProgram(bool On, bool Ours)
 struct Panel
 {
 	Calls c;
-	static Json X(double N) { return Op("+", { N, V("dx") }); }
-	static Json Y(double N) { return Op("+", { N, V("dy") }); }
+	static Json X(double N) { return Op("+", { S(N), V("dx") }); }
+	static Json Y(double N) { return Op("+", { S(N), V("dy") }); }
 
 	void Radio(double Yp, const std::string& Label, const char* Mark, bool On, const std::string& Action = "",
 		bool Big = false, double Xp = 184, const char* Font = "ft_standard_12")
@@ -556,13 +561,13 @@ struct Panel
 			c += Text(X(Xp + 42), Y(Yp + 18), Json(Label), Font, 0, 1, "white", 0, 1, Mark);
 		}
 		if (!Action.empty())
-			c += Push(A({ "Filter", Asset(spr.c_str()), X(Xp), Y(Yp), 36, 36, extra, g_Sink, Json("bf:" + Action), "" }));
+			c += Push(A({ "Filter", Asset(spr.c_str()), X(Xp), Y(Yp), S(36), S(36), extra, g_Sink, Json("bf:" + Action), "" }));
 	}
 	void Arrow(bool Left, double Xp, double Yp, const std::string& Action)
 	{
 		const char* spr = Left ? "spr_selector_btn_l_v2" : "spr_selector_btn_r_v2";
 		c += Spr(spr, 0, X(Xp), Y(Yp));
-		c += Push(A({ "sel", Asset(spr), X(Xp), Y(Yp), 24, 36, "", g_Sink, Json("bf:" + Action) }));
+		c += Push(A({ "sel", Asset(spr), X(Xp), Y(Yp), S(24), S(36), "", g_Sink, Json("bf:" + Action) }));
 	}
 	void Block(double Xp, double Yp, double W, const std::string& Value, const char* Color = "grey",
 		const char* Font = "ft_standard_12")
@@ -570,7 +575,7 @@ struct Panel
 		bool square = W <= 72;
 		const char* name = square ? "spr_selector_block_square" : "spr_selector_block_v2";
 		double native = square ? 36 : 256;
-		c += O({ { "fn", "draw_sprite_ext" }, { "args", A({ Asset(name), 0, X(Xp), Y(Yp), W / native, 1, 0, 0xFFFFFF, 1 }) } });
+		c += O({ { "fn", "draw_sprite_ext" }, { "args", A({ Asset(name), 0, X(Xp), Y(Yp), S(W / native), Sc(), 0, 0xFFFFFF, 1 }) } });
 		c += Text(X(Xp + W / 2), Y(Yp + 18), Json(Value), Font, 1, 1, Color, 1, 0);
 	}
 	void Selector(double Yp, const std::string& Value, const std::string& L, const std::string& R, double XL = 284,
@@ -594,7 +599,7 @@ struct Panel
 		c += Spr("spr_menu_grey_button", Selected ? 3 : 0, X(Xp), Y(Yp));
 		c += Text(X(Xp + 84), Y(Yp + 30), Json(Label), "ft_standard_12", 1, 1, Disabled ? "grey" : "white");
 		if (!(Selected || Disabled))
-			c += Push(A({ Json("BF " + Label), Asset("spr_menu_grey_button"), X(Xp), Y(Yp), 168, 52, Json(Label), g_Sink,
+			c += Push(A({ Json("BF " + Label), Asset("spr_menu_grey_button"), X(Xp), Y(Yp), S(168), S(52), Json(Label), g_Sink,
 				Json("bf:" + Action) }));
 	}
 	void Tab(double Xp, double Yp, const std::string& Label, const std::string& Action, bool Selected)
@@ -603,7 +608,7 @@ struct Panel
 		c += Spr(spr, Selected ? 2 : 0, X(Xp), Y(Yp));
 		c += Text(X(Xp + 44), Y(Yp + 28), Json(Label), "ft_standard_11");
 		if (!Selected)
-			c += Push(A({ Json("BF " + Label), Asset(spr), X(Xp), Y(Yp), 88, 52, Json(Label), g_Sink, Json("bf:" + Action) }));
+			c += Push(A({ Json("BF " + Label), Asset(spr), X(Xp), Y(Yp), S(88), S(52), Json(Label), g_Sink, Json("bf:" + Action) }));
 	}
 	void Box(double X0, double Y0, double X1, double Y1)
 	{
@@ -613,7 +618,7 @@ struct Panel
 	}
 	void Wrapped(double Xp, double Yp, const std::string& S, double Width, const char* Color = "white")
 	{
-		c += Text(X(Xp), Y(Yp), O({ { "$fn", "scr_cut_text" }, { "args", A({ Json(S), Width, "ft_standard_12" }) } }),
+		c += Text(X(Xp), Y(Yp), O({ { "$fn", "scr_cut_text" }, { "args", A({ Json(S), ::S(Width), "ft_standard_12" }) } }),
 			"ft_standard_12", 1, 1, Color);
 	}
 };
@@ -778,7 +783,9 @@ static Json PanelProgram(bool On, const std::string& Page, int SlotI)
 		auto lab = CONVERT_LABEL.find(RS("convert_to", "fragments"));
 		p.Selector(890, lab != CONVERT_LABEL.end() ? lab->second : "Fragments", "conv-", "conv+", 170, 466, true);
 	}
-	return O({ { "vars", A({ A({ "dx", Op("-", { O({ { "$arg", 0 } }), 330 }) }), A({ "dy", Op("-", { O({ { "$arg", 1 } }), 156 }) }) }) },
+	// the panel's position arrives scaled (330, 156 at 1920x1080): our layout's offsets from it scale too
+	return O({ { "vars", A({ ScaleVar(), A({ "dx", Op("-", { O({ { "$arg", 0 } }), S(330) }) }),
+		A({ "dy", Op("-", { O({ { "$arg", 1 } }), S(156) }) }) }) },
 		{ "calls", p.c.List } });
 }
 

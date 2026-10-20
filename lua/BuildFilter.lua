@@ -403,7 +403,13 @@ local function text(x, y, s, font, ha, va, color, a8, a9, mark)
   if mark then args[15] = mark end
   return { fn = "scr_draw_text", args = args }
 end
-local function spr(name, frame, x, y) return { fn = "draw_sprite", args = { asset(name), frame, x, y } } end
+-- The game lays its menus out for 1920x1080 and multiplies positions and sizes by self.ui_scale (from the resolution)
+-- as it draws; its mba entries and the panel's position arrive already scaled. "sc" is that scale (a program var).
+local function px(n) return op("*", n, V("sc")) end
+local SCALE_VAR = { "sc", op("??", self_var("ui_scale"), 1) }
+local function spr(name, frame, x, y)
+  return { fn = "draw_sprite_ext", args = { asset(name), frame, x, y, V("sc"), V("sc"), 0, 0xFFFFFF, 1 } }
+end
 local function push(entry, when) return { fn = "$mba_push", args = { entry }, when = when } end
 
 local function inventory_program(on, ours)
@@ -412,18 +418,19 @@ local function inventory_program(on, ours)
   local x, y = V("bx"), V("by")
   local right = on and "spr_menu_red_button" or "spr_menu_grey_button"
   local c = {
-    { fn = "$mba_set", args = { "Filter Active", 4, 168 } },
+    { fn = "$mba_set", args = { "Filter Active", 4, px(168) } },
     { fn = "$mba_set", args = { "Filter Active", 1, asset("spr_menu_grey_button") } },
     { fn = "$mba_set", args = { "Filter Active", 6, "Filter-o-tron" } },
-    { fn = "draw_sprite", args = { asset("spr_menu_grey_button"), op("?", op("and", shown, not ours), 3, 0), x, y } },
-    text(op("+", x, 84), op("+", y, 30), "Filter-o-tron"),
-    { fn = "draw_sprite", args = { asset(right), op("?", ours_shown, 3, 0), op("+", x, 168), y } },
-    text(op("+", x, 252), op("+", y, 30), "Build Filter"),
-    push({ "Build Filter", asset(right), op("+", x, 168), y, 168, 52, "Build Filter", sink, "bf:open" }, op("not", ours_shown)),
-    push({ "Filter-o-tron", asset("spr_menu_grey_button"), x, y, 168, 52, "Filter-o-tron", sink, "bf:game" }, ours_shown),
+    spr("spr_menu_grey_button", op("?", op("and", shown, not ours), 3, 0), x, y),
+    text(op("+", x, px(84)), op("+", y, px(30)), "Filter-o-tron"),
+    spr(right, op("?", ours_shown, 3, 0), op("+", x, px(168)), y),
+    text(op("+", x, px(252)), op("+", y, px(30)), "Build Filter"),
+    push({ "Build Filter", asset(right), op("+", x, px(168)), y, px(168), px(52), "Build Filter", sink, "bf:open" }, op("not", ours_shown)),
+    push({ "Filter-o-tron", asset("spr_menu_grey_button"), x, y, px(168), px(52), "Filter-o-tron", sink, "bf:game" }, ours_shown),
   }
   return {
-    vars = { { "bx", op("??", op("mba", "Filter Active", 2), BTN_X) }, { "by", op("??", op("mba", "Filter Active", 3), BTN_Y) } },
+    vars = { SCALE_VAR, { "bx", op("??", op("mba", "Filter Active", 2), px(BTN_X)) },
+             { "by", op("??", op("mba", "Filter Active", 3), px(BTN_Y)) } },
     when = op("or", op("def", op("mba", "Filter Active", 0)), op("and", shown, op("==", self_var("menu_show"), "inventory"))),
     calls = c }
 end
@@ -431,8 +438,8 @@ end
 -- Friedrich's panel: positions relative to the panel (dx, dy come from the hooked script's arguments)
 local Panel = {}
 Panel.__index = Panel
-local function X(n) return op("+", n, V("dx")) end
-local function Y(n) return op("+", n, V("dy")) end
+local function X(n) return op("+", px(n), V("dx")) end
+local function Y(n) return op("+", px(n), V("dy")) end
 
 function Panel.new() return setmetatable({ c = {} }, Panel) end
 function Panel:add(call) self.c[#self.c + 1] = call end
@@ -452,21 +459,21 @@ function Panel:radio(yp, label, mark, on, action, big, xp, font)
     self:add(text(X(xp + 42), Y(yp + 18), label, font or "ft_standard_12", 0, 1, "white", 0, 1, mark))
   end
   if action then
-    self:add(push({ "Filter", asset(sprite), X(xp), Y(yp), 36, 36, extra, sink, "bf:" .. action, "" }))
+    self:add(push({ "Filter", asset(sprite), X(xp), Y(yp), px(36), px(36), extra, sink, "bf:" .. action, "" }))
   end
 end
 
 function Panel:arrow(left, xp, yp, action)
   local sprite = left and "spr_selector_btn_l_v2" or "spr_selector_btn_r_v2"
   self:add(spr(sprite, 0, X(xp), Y(yp)))
-  self:add(push({ "sel", asset(sprite), X(xp), Y(yp), 24, 36, "", sink, "bf:" .. action }))
+  self:add(push({ "sel", asset(sprite), X(xp), Y(yp), px(24), px(36), "", sink, "bf:" .. action }))
 end
 
 function Panel:block(xp, yp, w, value, color, font)
   local square = w <= 72
   local name = square and "spr_selector_block_square" or "spr_selector_block_v2"
   local native = square and 36 or 256
-  self:add({ fn = "draw_sprite_ext", args = { asset(name), 0, X(xp), Y(yp), w / native, 1, 0, 0xFFFFFF, 1 } })
+  self:add({ fn = "draw_sprite_ext", args = { asset(name), 0, X(xp), Y(yp), px(w / native), V("sc"), 0, 0xFFFFFF, 1 } })
   self:add(text(X(xp + w / 2), Y(yp + 18), value, font or "ft_standard_12", 1, 1, color or "grey", 1, 0))
 end
 
@@ -486,7 +493,7 @@ function Panel:button(xp, yp, label, action, selected, disabled)
   self:add(spr("spr_menu_grey_button", selected and 3 or 0, X(xp), Y(yp)))
   self:add(text(X(xp + 84), Y(yp + 30), label, "ft_standard_12", 1, 1, disabled and "grey" or "white"))
   if not (selected or disabled) then
-    self:add(push({ "BF " .. label, asset("spr_menu_grey_button"), X(xp), Y(yp), 168, 52, label, sink, "bf:" .. action }))
+    self:add(push({ "BF " .. label, asset("spr_menu_grey_button"), X(xp), Y(yp), px(168), px(52), label, sink, "bf:" .. action }))
   end
 end
 
@@ -495,7 +502,7 @@ function Panel:tab(xp, yp, label, action, selected)
   self:add(spr(sprite, selected and 2 or 0, X(xp), Y(yp)))
   self:add(text(X(xp + 44), Y(yp + 28), label, "ft_standard_11"))
   if not selected then
-    self:add(push({ "BF " .. label, asset(sprite), X(xp), Y(yp), 88, 52, label, sink, "bf:" .. action }))
+    self:add(push({ "BF " .. label, asset(sprite), X(xp), Y(yp), px(88), px(52), label, sink, "bf:" .. action }))
   end
 end
 
@@ -506,7 +513,7 @@ function Panel:box(x0, y0, x1, y1)
 end
 
 function Panel:wrapped(xp, yp, s, width, color)
-  self:add(text(X(xp), Y(yp), { ["$fn"] = "scr_cut_text", args = { s, width, "ft_standard_12" } }, "ft_standard_12", 1, 1,
+  self:add(text(X(xp), Y(yp), { ["$fn"] = "scr_cut_text", args = { s, px(width), "ft_standard_12" } }, "ft_standard_12", 1, 1,
     color or "white"))
 end
 
@@ -620,7 +627,9 @@ local function panel_program(on, page, slot_i)
     p:add(text(X(330), Y(878), "Turn filtered items into:", "ft_standard_12", 1, 2, "grey"))
     p:selector(890, CONVERT_LABEL[rules.convert_to] or "Fragments", "conv-", "conv+", 170, 466, true)
   end
-  return { vars = { { "dx", op("-", { ["$arg"] = 0 }, 330) }, { "dy", op("-", { ["$arg"] = 1 }, 156) } }, calls = p.c }
+  -- the panel's position arrives scaled (330, 156 at 1920x1080): our layout's offsets from it scale too
+  return { vars = { SCALE_VAR, { "dx", op("-", { ["$arg"] = 0 }, px(330)) }, { "dy", op("-", { ["$arg"] = 1 }, px(156)) } },
+           calls = p.c }
 end
 
 -- ============================================================================
