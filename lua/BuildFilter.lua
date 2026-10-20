@@ -16,7 +16,7 @@
 local S = slorm
 local null = S.null
 
-S.mod{ name = "BuildFilter (Lua)", version = "1.0.0", author = "thothas",
+S.mod{ name = "BuildFilter (Lua)", version = "1.0.1", author = "thothas",
        description = "Loot filter for your build: inventory > Build Filter" }
 
 local SINK = "scr_blacksmith_open_filter_from_inventory"

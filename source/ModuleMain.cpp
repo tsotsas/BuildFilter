@@ -32,7 +32,7 @@ static SlormAPIInterface* g_Api = nullptr;
 static std::filesystem::path g_Dir;           // mods/aurie/BuildFilter
 static bf::GameData g_Data;
 
-static constexpr const char* kVersion = "1.0.0";
+static constexpr const char* kVersion = "1.0.1";
 static constexpr const char* OWNER = "BuildFilter";      // our layer of SlormAPI's hooks and our hook log
 static constexpr const char* SINK = "scr_blacksmith_open_filter_from_inventory";
 static constexpr double BTN_X = 1537, BTN_Y = 904;      // the Filter-o-tron button when its element is not listed

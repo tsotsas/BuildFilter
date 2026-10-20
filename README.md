@@ -1,4 +1,4 @@
-# BuildFilter 1.0.0 — a loot filter for your build (The Slormancer)
+# BuildFilter 1.0.1 — a loot filter for your build (The Slormancer)
 
 ![BuildFilter](docs/banner.png)
 
@@ -49,12 +49,12 @@ Install one of the two. If both are there, the Lua version stays off and the Mod
 
 ## Requirements
 - The Slormancer (Windows, Steam version)
-- **SlormAPI 1.0.0** and the Aurie mod loader — the installer below brings both.
+- **SlormAPI 1.0.0 or newer** and the Aurie mod loader — the installer below brings both.
 
 ## Install
 
 ### Easy: the installer (recommended)
-1. Download **`BuildFilter-Installer-1.0.0.zip`** from this repository's **Releases** page and unzip it.
+1. Download **`BuildFilter-Installer-1.0.1.zip`** from this repository's **Releases** page and unzip it.
 2. Close the game, double-click **`Install.bat`** and choose **1**.
 3. Start the game from Steam as usual.
 
@@ -84,8 +84,14 @@ It is SlormAPI's installer with BuildFilter added (`installer/` in the SlormAPI 
 
 ### Manual
 With SlormAPI installed, unzip one of these into `<The Slormancer folder>` (they hold only the game-folder layout):
-- C++ version (`BuildFilter-1.0.0.zip`): `mods/Aurie/BuildFilter.dll`.
-- Lua version (`BuildFilter-Lua-1.0.0.zip`): `mods/lua/BuildFilter.lua`. It starts while the game runs.
+- C++ version (`BuildFilter-1.0.1.zip`): `mods/Aurie/BuildFilter.dll`.
+- Lua version (`BuildFilter-Lua-1.0.1.zip`): `mods/lua/BuildFilter.lua`. It starts while the game runs.
+
+### Vortex
+With The Slormancer's Vortex extension and its loader installed, add `SlormAPI-1.0.1.zip` and `BuildFilter-1.0.1.zip`
+in Vortex like any other mod (both go to `mods/Aurie`). Don't use the installer then; if you used it before, run it
+once more and choose **4** first (the Vortex loader setup needs the original game exe back). The Lua version is a
+manual install: copy `BuildFilter.lua` into `mods\lua`.
 
 Names (stats, legendaries, skills) come from the game's own data files, so the lists follow game updates.
 BuildFilter never edits your save files directly.
